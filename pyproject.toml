@@ -1,0 +1,41 @@
+[project]
+name = "banking-transactions-analysis"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Olga Dementieva",email = "082489@mail.ru"}
+]
+requires-python = ">=3.14"
+dependencies = [
+    "requests (>=2.33.0,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+lint = [
+    "flake8 (>=7.3.0,<8.0.0)",
+    "black (>=26.3.1,<27.0.0)",
+    "isort (>=8.0.1,<9.0.0)",
+    "mypy (>=1.19.1,<2.0.0)"
+]
+[tool.black]
+line-length = 119
+exclude = ".git"
+
+[tool.isort]
+line_length = 119
+
+[tool.mypy]
+disallow_untyped_defs = true
+warn_return_any = true
+exclude = "venv"
+
+# Для тестов
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
