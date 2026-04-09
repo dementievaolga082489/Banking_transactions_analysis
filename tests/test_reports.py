@@ -1,5 +1,6 @@
-import pytest
 import json
+
+import pytest
 
 # Импортируем тестируемые функции
 from src.reports import spending_by_category
@@ -49,5 +50,3 @@ def test_spending_by_category_invalid_date_format(sample_transactions):
         spending_by_category(sample_transactions, "Продукты", "15-04-2024")
 
     assert "Не удалось распознать формат даты" in str(exc_info.value)
-
-
