@@ -42,7 +42,6 @@ def load_user_settings() -> Dict[str, List[str]]:
         return {}
 
 
-
 # print(load_user_settings())
 
 
