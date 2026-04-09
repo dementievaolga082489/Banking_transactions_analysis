@@ -1,10 +1,13 @@
 import json
-import pandas as pd
-import requests
-import pytest
 from datetime import datetime
-from src.utils import load_user_settings, get_greeting, calculate_card_operations, get_top_transactions, get_currency_rates, get_stock_prices
-from unittest.mock import mock_open, patch, Mock
+from unittest.mock import Mock, mock_open, patch
+
+import pandas as pd
+import pytest
+import requests
+
+from src.utils import (calculate_card_operations, get_currency_rates, get_greeting, get_stock_prices,
+                       get_top_transactions, load_user_settings)
 
 
 def test_load_user_settings_success(sample_settings) -> None:  # Фикстура как аргумент
@@ -21,24 +24,28 @@ def test_load_user_settings_file_not_found_alternative() -> None:
         assert result == {}
 
 
-@pytest.mark.parametrize("hour, expected", [
-    (0, "Доброй ночи"),
-    (1, "Доброй ночи"),
-    (5, "Доброй ночи"),
-    (6, "Доброе утро"),
-    (7, "Доброе утро"),
-    (11, "Доброе утро"),
-    (12, "Добрый день"),
-    (13, "Добрый день"),
-    (17, "Добрый день"),
-    (18, "Добрый вечер"),
-    (19, "Добрый вечер"),
-    (22, "Добрый вечер"),
-    (23, "Доброй ночи"),
-])
+@pytest.mark.parametrize(
+    "hour, expected",
+    [
+        (0, "Доброй ночи"),
+        (1, "Доброй ночи"),
+        (5, "Доброй ночи"),
+        (6, "Доброе утро"),
+        (7, "Доброе утро"),
+        (11, "Доброе утро"),
+        (12, "Добрый день"),
+        (13, "Добрый день"),
+        (17, "Добрый день"),
+        (18, "Добрый вечер"),
+        (19, "Добрый вечер"),
+        (22, "Добрый вечер"),
+        (23, "Доброй ночи"),
+    ],
+)
 def test_get_greeting_parametrized(hour, expected):
     """Параметризованный тест - определение времени суток"""
     assert get_greeting(datetime(2024, 1, 1, hour, 30, 0)) == expected
+
 
 def test_empty_dataframe():
     """Тест: пустой DataFrame"""
@@ -46,39 +53,37 @@ def test_empty_dataframe():
     result = calculate_card_operations(df_empty)
     assert result == []
 
+
 def test_mixed_expenses_and_income():
     """Тест: смешанные операции (расходы и доходы)"""
-    df = pd.DataFrame({
-        "Номер карты": ["****9999", "****9999", "****9999", "****9999"],
-        "Сумма платежа": [-1000, 500, -200, 1000]  # Расходы: 1200, доходы: 1500
-    })
+    df = pd.DataFrame(
+        {
+            "Номер карты": ["****9999", "****9999", "****9999", "****9999"],
+            "Сумма платежа": [-1000, 500, -200, 1000],  # Расходы: 1200, доходы: 1500
+        }
+    )
 
     result = calculate_card_operations(df)
 
-    expected = [{
-            "last_digits": "9999",
-            "total_spent": 1200.0,  # Только расходы
-            "cashback": 12.0
-        }]
+    expected = [{"last_digits": "9999", "total_spent": 1200.0, "cashback": 12.0}]  # Только расходы
     assert result == expected
 
 
-
-@pytest.mark.parametrize("card_number, expected_digits", [
-    ("****1234", "1234"),
-    ("1234567890123456", "3456"),
-    ("1234", "1234"),
-    ("12", "12"),
-    ("**** **** 5678", "5678"),
-    ("   ***9012   ", "9012"),
-    ("", ""),  # Пустая строка
-])
+@pytest.mark.parametrize(
+    "card_number, expected_digits",
+    [
+        ("****1234", "1234"),
+        ("1234567890123456", "3456"),
+        ("1234", "1234"),
+        ("12", "12"),
+        ("**** **** 5678", "5678"),
+        ("   ***9012   ", "9012"),
+        ("", ""),  # Пустая строка
+    ],
+)
 def test_card_number_extraction(card_number, expected_digits):
     """Параметризованный тест: извлечение последних цифр номера карты"""
-    df = pd.DataFrame({
-        "Номер карты": [card_number],
-        "Сумма платежа": [-100]
-    })
+    df = pd.DataFrame({"Номер карты": [card_number], "Сумма платежа": [-100]})
 
     result = calculate_card_operations(df)
 
@@ -110,8 +115,6 @@ def test_get_top_transactions_normal_case(transactions):
     assert result[0]["date"] == "04.01.2024"
 
 
-
-
 def test_get_currency_rates_success(mock_success_response):
     """Тест успешного получения курсов нескольких валют"""
     currencies = ["USD", "EUR", "CNY"]
@@ -121,7 +124,7 @@ def test_get_currency_rates_success(mock_success_response):
     mock_response.json.return_value = mock_success_response
     mock_response.raise_for_status.return_value = None
 
-    with patch('requests.get', return_value=mock_response):
+    with patch("requests.get", return_value=mock_response):
 
         result = get_currency_rates(currencies)
 
@@ -135,7 +138,7 @@ def test_get_currency_rates_request_error():
     """Тест ошибки сетевого запроса"""
     currencies = ["USD", "EUR"]
 
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_get.side_effect = requests.RequestException("Network error")
 
         result = get_currency_rates(currencies)
@@ -143,7 +146,6 @@ def test_get_currency_rates_request_error():
         # Для каждой валюты должна быть попытка запроса и ошибка
         assert result[0] == {}
         assert result[1] == {}
-
 
 
 def test_get_currency_rates_currency_not_found(mock_success_response):
@@ -154,8 +156,7 @@ def test_get_currency_rates_currency_not_found(mock_success_response):
     mock_response.json.return_value = mock_success_response
     mock_response.raise_for_status.return_value = None
 
-    with patch('requests.get', return_value=mock_response):
-
+    with patch("requests.get", return_value=mock_response):
 
         result = get_currency_rates(currencies)
 
@@ -163,25 +164,17 @@ def test_get_currency_rates_currency_not_found(mock_success_response):
         assert result[1] == {}  # Для ненайденной валюты возвращается пустой словарь
 
 
-@patch('requests.get')
+@patch("requests.get")
 def test_successful_price_retrieval(mock_get):
     """Тест успешного получения цен для нескольких акций"""
     # Подготовка мок-ответа для AAPL
     mock_response_aapl = Mock()
-    mock_response_aapl.json.return_value = {
-        "Global Quote": {
-            "05. price": "150.25"
-        }
-    }
+    mock_response_aapl.json.return_value = {"Global Quote": {"05. price": "150.25"}}
     mock_response_aapl.raise_for_status = Mock()
 
     # Подготовка мок-ответа для GOOGL
     mock_response_googl = Mock()
-    mock_response_googl.json.return_value = {
-        "Global Quote": {
-            "05. price": "2750.50"
-        }
-    }
+    mock_response_googl.json.return_value = {"Global Quote": {"05. price": "2750.50"}}
     mock_response_googl.raise_for_status = Mock()
 
     # Настройка последовательных ответов
@@ -192,13 +185,11 @@ def test_successful_price_retrieval(mock_get):
     result = get_stock_prices(stocks)
 
     # Проверка результата
-    expected = [
-        {"stock": "AAPL", "price": 150.25},
-        {"stock": "GOOGL", "price": 2750.50}
-    ]
+    expected = [{"stock": "AAPL", "price": 150.25}, {"stock": "GOOGL", "price": 2750.50}]
     assert result == expected
 
-@patch('requests.get')
+
+@patch("requests.get")
 def test_stock_not_found(mock_get):
     """Тест ситуации, когда акция не найдена в ответе API"""
     mock_response = Mock()
@@ -212,7 +203,7 @@ def test_stock_not_found(mock_get):
     assert result == expected
 
 
-@patch('requests.get')
+@patch("requests.get")
 def test_request_exception_handling(mock_get):
     """Тест обработки исключений при запросе"""
     mock_get.side_effect = requests.RequestException("Connection error")
