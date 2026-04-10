@@ -30,16 +30,21 @@ def main_page(date_time_str: str) -> Dict[str, Any]:
         JSON-ответ с данными для главной страницы
     """
     try:
-        # Парсим входную дату
-        current_datetime = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
-        logger.info(f"Обработка запроса на получение даты и времени : {current_datetime}")
+        # Парсим входную дату для фильтрации транзакций
+        filter_datetime = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M:%S")
+        logger.info(f"Обработка запроса на получение даты и времени для фильтрации: {filter_datetime}")
+
+        # Получаем приветствие на основе текущего системного времени
+        current_datetime = datetime.now()
+        greeting = get_greeting(current_datetime)
+        logger.info(f"Приветствие на основе текущего времени {current_datetime}: {greeting}")
 
         # Загружаем настройки пользователя
         user_settings = load_user_settings()
         logger.info(f"Пользовательские настройки загружены: {user_settings}")
 
         # Получаем приветствие
-        greeting = get_greeting(current_datetime)
+       # greeting = get_greeting(current_datetime)
 
         # Загружаем данные транзакций
         df = pd.read_excel(EXL_FILE)
@@ -49,8 +54,8 @@ def main_page(date_time_str: str) -> Dict[str, Any]:
         df["Дата операции"] = pd.to_datetime(df["Дата операции"], dayfirst=True)
 
         # Определяем диапазон для анализа (с начала месяца по входную дату)
-        start_date = current_datetime.replace(day=1, hour=0, minute=0, second=0)
-        end_date = current_datetime
+        start_date = filter_datetime.replace(day=1, hour=0, minute=0, second=0)
+        end_date = filter_datetime
 
         # Фильтруем транзакции по дате и статусу
         mask = (df["Дата операции"] >= start_date) & (df["Дата операции"] <= end_date) & (df["Статус"] == "OK")
