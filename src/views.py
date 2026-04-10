@@ -43,8 +43,6 @@ def main_page(date_time_str: str) -> Dict[str, Any]:
         user_settings = load_user_settings()
         logger.info(f"Пользовательские настройки загружены: {user_settings}")
 
-        # Получаем приветствие
-       # greeting = get_greeting(current_datetime)
 
         # Загружаем данные транзакций
         df = pd.read_excel(EXL_FILE)
